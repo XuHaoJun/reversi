@@ -1,4 +1,5 @@
-(ns reversi.core)
+(ns reversi.core
+  (:require [clojure.browser.repl]))
 
 (def ^:dynamic *empty-grid* 0)
 (def ^:dynamic *black-piece* 1)
@@ -57,9 +58,7 @@
   (not (piece? grid)))
 
 (defn gridth [[x y] border]
-  (if (in-border? [x y] border)
-    (nth (nth border y nil) x nil)
-    nil))
+  (get-in border [y x]))
 
 (defn in-empty-grid? [[x y] border]
   (empty-grid? (gridth [x y] border)))
@@ -137,18 +136,17 @@
     (let [nearby-nonsame-color-dire-offsets
           (nearby-color-piece-dire-offsets
            (another-color-piece piece) [x y] border)]
-      (if-not (empty? nearby-nonsame-color-dire-offsets)
-        (loop [offsets nearby-nonsame-color-dire-offsets]
+      (loop [offsets nearby-nonsame-color-dire-offsets]
+        (if-not (empty? offsets)
           (let [offset (first offsets)
-                offsetd-position (mapv + [x y] offset)
+                offseted-position (mapv + [x y] offset)
                 target-posi (find-same-piece-on-dire offset
                                                      piece
-                                                     offsetd-position
+                                                     offseted-position
                                                      border)]
-            (cond (and (nil? target-posi) (not (nil? offsets)))
-                  (recur (rest offsets))
-                  (not (nil? target-posi))
-                  true)))))))
+            (if-not (nil? target-posi)
+              true
+              (recur (rest offsets)))))))))
 
 (defn add-possible-empty-grids [possible-empty-grids [x y] border]
   (let [nearby-empty-grid-dire-offsets
@@ -159,37 +157,30 @@
     (apply conj possible-empty-grids
            new-possible-empty-grids)))
 
+(defn all-empty-grids [border]
+  (apply concat
+         (keep-indexed (fn [y x-line]
+                         (keep-indexed (fn [x grid]
+                                         (if (empty-grid? (gridth [x y] border))
+                                           [x y]))
+                                       x-line))
+                       border)))
+
 (defn find-putable-empty-grids
   ;; search each empty grids
-  ;; ([piece border]
-  ;;    (filter (fn [empty-grid]
-  ;;              (can-reversi? piece empty-grid border))
-  ;;            )
-  ;;    )
+  ([piece border]
+     (if (piece? piece)
+       (filter (fn [empty-grid]
+                 (can-reversi? piece empty-grid border))
+               (all-empty-grids border))))
   ;; only search possible-empty-grids
   ([piece possible-empty-grids border]
-     (filter (fn [empty-grid]
-               (can-reversi? piece empty-grid border))
-             possible-empty-grids)))
+     (if (piece? piece)
+       (filter (fn [empty-grid]
+                 (can-reversi? piece empty-grid border))
+               possible-empty-grids))))
 
 (defn put-piece [piece [x y] border]
-  ;; (when (in-empty-grid? [x y] border)
-  ;;   (let [nearby-nonsame-color-dire-offsets
-  ;;         (nearby-color-piece-dire-offsets
-  ;;          (another-color-piece piece) [x y] border)]
-  ;;     (if-not (empty? nearby-nonsame-color-dire-offsets)
-  ;;       (let [target-posis
-  ;;             (reduce (fn [m offset]
-  ;;                       (let [offsetd-position (mapv + [x y] offset)
-  ;;                             target-posi (find-same-piece-on-dire offset
-  ;;                                                                  piece
-  ;;                                                                  offsetd-position
-  ;;                                                                  border)]
-  ;;                         (if-not (nil? target-posi)
-  ;;                           (cons target-posi m)
-  ;;                           m)))
-  ;;                     '()
-  ;;                     nearby-nonsame-color-dire-offsets)]
   (let [target-posis (find-reversiable-lines piece [x y] border)]
     (if-not (empty? target-posis)
       (reduce (fn [b tposi]
