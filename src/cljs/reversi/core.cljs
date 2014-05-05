@@ -4,16 +4,19 @@
 (def ^:dynamic *empty-grid* 0)
 (def ^:dynamic *black-piece* 1)
 (def ^:dynamic *white-piece* 2)
+(def ^:dynamic *possible-grid* 3)
 
 (def ^:dynamic *default-border*
-  [[ 0 0 0 0 0 0 0 0 ]
-   [ 0 0 0 0 0 0 0 0 ]
-   [ 0 0 0 0 0 0 0 0 ]
-   [ 0 0 0 1 2 0 0 0 ]
-   [ 0 0 0 2 1 0 0 0 ]
-   [ 0 0 0 0 0 0 0 0 ]
-   [ 0 0 0 0 0 0 0 0 ]
-   [ 0 0 0 0 0 0 0 0 ]])
+  ;  0 1 2 3 4 5 6 7
+  [[ 0 0 0 0 0 0 0 0 ]  ; 0
+   [ 0 0 0 0 0 0 0 0 ]  ; 1
+   [ 0 0 0 0 0 0 0 0 ]  ; 2
+   [ 0 0 0 1 2 0 0 0 ]  ; 3
+   [ 0 0 0 2 1 0 0 0 ]  ; 4
+   [ 0 0 0 0 0 0 0 0 ]  ; 5
+   [ 0 0 0 0 0 0 0 0 ]  ; 6
+   [ 0 0 0 0 0 0 0 0 ]]); 7
+
 
 (def ^:dynamic *default-possible-empty-grids*
   #{
@@ -32,6 +35,16 @@
                                     [-1 0] ; right
                                     [-1 -1]; top-left
                                     ])
+
+(defn pprint-border [border]
+  (for [line border]
+    (println line)))
+
+(defn border-height [border]
+  (count border))
+
+(defn border-width [border]
+  (count (nth border 0 [])))
 
 (defn in-border? [[x y] border]
   (let [height (count border)
@@ -59,6 +72,9 @@
 
 (defn gridth [[x y] border]
   (get-in border [y x]))
+
+(defn foo []
+  (js/console.log "wiwi"))
 
 (defn in-empty-grid? [[x y] border]
   (empty-grid? (gridth [x y] border)))
@@ -99,17 +115,19 @@
             (vec (reverse target-pos))
             grid))
 
-(defn reversi-line [piece target-pos [x y] border]
+(defn reversi-line
+  [piece target-pos [x y] border
+   & {:keys [on-reversi-a-piece] :or {on-reversi-a-piece (fn [[revering-x reversing-y]])}}]
   (let [target-dire
         (position-dire-offset target-pos [x y])]
     (loop [cur-pos [x y]
            b border]
-      (if (in-border? cur-pos b)
+      (when (in-border? cur-pos b)
+        (on-reversi-a-piece cur-pos)
         (if (= cur-pos target-pos)
-          (assoc-border piece target-pos b)
+          (assoc-border piece cur-pos b)
           (recur (mapv + target-dire cur-pos)
                  (assoc-border piece cur-pos b)))))))
-
 
 (defn find-reversiable-lines [piece [x y] border]
   (when (in-empty-grid? [x y] border)
@@ -180,10 +198,13 @@
                  (can-reversi? piece empty-grid border))
                possible-empty-grids))))
 
-(defn put-piece [piece [x y] border]
+(defn put-piece
+  [piece [x y] border
+   & {:keys [on-reversi-a-piece] :or {on-reversi-a-piece (fn [[x y]])}}]
   (let [target-posis (find-reversiable-lines piece [x y] border)]
     (if-not (empty? target-posis)
       (reduce (fn [b tposi]
-                (reversi-line piece tposi [x y] b))
+                (reversi-line piece tposi [x y] b
+                              :on-reversi-a-piece on-reversi-a-piece))
               border target-posis)
       border)))
