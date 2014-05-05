@@ -46,6 +46,26 @@
 (defn border-width [border]
   (count (nth border 0 [])))
 
+(defn end-game? [border]
+  (not (contains? (set (flatten border))
+                  *empty-grid*)))
+
+(defn who-win? [border]
+  (let [result-count
+        (reduce (fn [m grid]
+                  (assoc m grid (inc (m grid))))
+                {*black-piece* 0
+                 *white-piece* 0
+                 *empty-grid* 0}
+                (flatten border)
+                )]
+    (cond (> 0 (result-count *empty-grid*))
+          nil
+          (> (result-count *white-piece*) (result-count *black-piece*))
+          *white-piece*
+          :else
+          *black-piece*)))
+
 (defn in-border? [[x y] border]
   (let [height (count border)
         width (count (nth border 0 []))]
@@ -73,9 +93,6 @@
 (defn gridth [[x y] border]
   (get-in border [y x]))
 
-(defn foo []
-  (js/console.log "wiwi"))
-
 (defn in-empty-grid? [[x y] border]
   (empty-grid? (gridth [x y] border)))
 
@@ -96,6 +113,8 @@
     (let [grid (gridth [offseted-x offseted-y] border)]
       (cond (= grid piece)
             [offseted-x offseted-y]
+            (empty-grid? grid)
+            nil
             (in-border? [offseted-x offseted-y] border)
             (recur (+ offseted-x (first dire-offset))
                    (+ offseted-y (second dire-offset)))
@@ -206,5 +225,4 @@
       (reduce (fn [b tposi]
                 (reversi-line piece tposi [x y] b
                               :on-reversi-a-piece on-reversi-a-piece))
-              border target-posis)
-      border)))
+              border target-posis))))

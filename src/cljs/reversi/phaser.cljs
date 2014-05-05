@@ -5,19 +5,40 @@
 (def *border* (atom rcore/*default-border*))
 (def *phaser-border* (atom [[] [] [] [] [] [] [] []]))
 (def *visible-possible-grids-pos* (atom '()))
+(def *black-piece-count* (atom 2))
+(def *white-piece-count* (atom 2))
+(def ^:dynamic *default-player-use-piece* rcore/*black-piece*)
+(def ^:dynamic *default-pc-use-piece* rcore/*white-piece*)
 
-(def ^:dynamic *gn-rp-table* {"empty-grid" rcore/*empty-gird*
-                              "black-piece" rcore/*black-piece*
-                              "white-piece" rcore/*white-piece*
-                              "possible-grid" rcore/*possible-grid*})
+;; (defn inc-piece-count [piece n]
+;;   (cond
+;;    (rcore/white-piece? piece)
+;;    (reset! *white-piece-count*
+;;            (+ n @*white-piece-count*))
+;;    (rcore/black-piece? piece)
+;;    (reset! *black-piece-count*
+;;            (+ n @*black-piece-count*))))
 
-(defn grid-name->rcore-piece [grid-name]
-  (*gn-rp-table* grid-name))
+(defn grid-name->rcore-grid [grid-name]
+  (let [gn-rp-table
+        {"empty-grid" rcore/*empty-gird*
+         "black-piece" rcore/*black-piece*
+         "white-piece" rcore/*white-piece*
+         "possible-grid" rcore/*possible-grid*}]
+    (gn-rp-table grid-name)))
 
-(defn rcore-piece->grid-name [rcore-piece]
-  ;; TODO
-  )
+(defn rcore-grid->grid-name [rcore-grid]
+  (let [rp-gn-table
+        {rcore/*empty-gird*    "empty-grid"
+         rcore/*black-piece*   "black-piece"
+         rcore/*white-piece*   "white-piece"
+         rcore/*possible-grid* "possible-grid"}]
+    (rp-gn-table rcore-grid)))
 
+(defn another-color-piece [grid-name]
+  (rcore-grid->grid-name
+   (rcore/another-color-piece
+    (grid-name->rcore-grid grid-name))))
 
 (defn put-piece [piece [x y] border phaser-border]
   (let [result-border
@@ -26,44 +47,60 @@
                          border
                          :on-reversi-a-piece
                          (fn [[x y]]
-                           (set! (.-visible ((rcore/gridth [x y] phaser-border) "black-piece")) true)
-                           (set! (.-visible ((rcore/gridth [x y] phaser-border) "white-piece")) false)
+                           (set! (.-visible ((rcore/gridth [x y] phaser-border)
+                                             (rcore-grid->grid-name piece)))
+                                 true)
+                           (set! (.-visible ((rcore/gridth [x y] phaser-border)
+                                             (another-color-piece
+                                              (rcore-grid->grid-name piece))))
+                                 false)
                            ))]
-    (if-not (empty? result-border)
-      (do
-        (doseq [pg-pos @*visible-possible-grids-pos*]
-          (set! (.-visible ((rcore/gridth pg-pos @*phaser-border*) "possible-grid")) false))
-        (reset! *visible-possible-grids-pos* '())
-        (reset! *border* result-border))
-      )))
+    (when-not (empty? result-border)
+      (doseq [pg-pos @*visible-possible-grids-pos*]
+        (set! (.-visible ((rcore/gridth pg-pos phaser-border)
+                          "possible-grid")) false))
+      (reset! *visible-possible-grids-pos* '())
+      (reset! *border* result-border)
+      result-border)))
+
+(defn pc-ai-put-piece [border phaser-border]
+  (let [pc-possible-grids-pos
+        (rcore/find-putable-empty-grids
+         *default-pc-use-piece* border)]
+    (if-not (empty? pc-possible-grids-pos)
+      (put-piece *default-pc-use-piece*
+                 (rand-nth pc-possible-grids-pos)
+                 border
+                 phaser-border
+                 ))))
 
 (defn on-click-possible-grid [pgrid]
-  (let [result-border
-        (rcore/put-piece rcore/*black-piece*
-                         (.-gridPosition pgrid)
-                         @*border*
-                         :on-reversi-a-piece
-                         (fn [[x y]]
-                           (set! (.-visible ((rcore/gridth [x y] @*phaser-border*) "black-piece")) true)
-                           (set! (.-visible ((rcore/gridth [x y] @*phaser-border*) "white-piece")) false)
-                           ))]
-    (if-not (empty? result-border)
+  (put-piece *default-player-use-piece*
+             (.-gridPosition pgrid)
+             @*border*
+             @*phaser-border*)
+  (pc-ai-put-piece @*border* @*phaser-border*)
+  (let [player-possible-grids-pos
+        (rcore/find-putable-empty-grids
+         *default-player-use-piece* @*border*)]
+    (if-not (empty? player-possible-grids-pos)
       (do
-        (doseq [pg-pos @*visible-possible-grids-pos*]
-          (set! (.-visible ((rcore/gridth pg-pos @*phaser-border*) "possible-grid")) false))
-        (reset! *visible-possible-grids-pos* '())
-        (reset! *border* result-border))
-      ))
-  ;; (let [pc-possible-grids-pos
-  ;;       (rcore/find-putable-empty-grids rcore/*white-piece* @*border*)]
-  ;;   (if-not (empty? pc-possible-grids-pos)
-  ;;     (rand-nth pc-possible-grids-pos)
-  ;;     )
-  ;;   )
-  )
+        (swap! *visible-possible-grids-pos* concat
+               player-possible-grids-pos)
+        (doseq [pg-pos player-possible-grids-pos]
+          (set! (.-visible ((rcore/gridth pg-pos @*phaser-border*)
+                            "possible-grid"))
+                true)))
+      (pc-ai-put-piece @*border* @*phaser-border*)))
+  (when (rcore/end-game? @*border*)
+    (let [winner (rcore/who-win? @*border*)]
+      (if (= winner *default-player-use-piece*)
+        (js/alert "you are winner!")
+        (js/alert "you are loser!")
+        ))))
 
 (defn create-pieces [piece-name game]
-  (let [piece-color (grid-name->rcore-piece piece-name)]
+  (let [piece-color (grid-name->rcore-grid piece-name)]
     (dotimes [y 8]
       (dotimes [x 8]
         (let [piece
@@ -84,6 +121,7 @@
         (set! (.-visible pgrid) false)
         (set! (.-gridPosition pgrid) [x y])
         (set! (.-gridColor pgrid) 3)
+        (set! (.-useHandCursor (.-input pgrid)) true)
         (swap! *phaser-border* assoc-in [y x grid-name] pgrid)
         ))))
 
