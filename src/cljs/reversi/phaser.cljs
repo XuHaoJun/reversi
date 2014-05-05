@@ -5,19 +5,8 @@
 (def *border* (atom rcore/*default-border*))
 (def *phaser-border* (atom [[] [] [] [] [] [] [] []]))
 (def *visible-possible-grids-pos* (atom '()))
-(def *black-piece-count* (atom 2))
-(def *white-piece-count* (atom 2))
 (def ^:dynamic *default-player-use-piece* rcore/*black-piece*)
 (def ^:dynamic *default-pc-use-piece* rcore/*white-piece*)
-
-;; (defn inc-piece-count [piece n]
-;;   (cond
-;;    (rcore/white-piece? piece)
-;;    (reset! *white-piece-count*
-;;            (+ n @*white-piece-count*))
-;;    (rcore/black-piece? piece)
-;;    (reset! *black-piece-count*
-;;            (+ n @*black-piece-count*))))
 
 (defn grid-name->rcore-grid [grid-name]
   (let [gn-rp-table
