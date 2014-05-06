@@ -50,18 +50,20 @@
   (not (contains? (set (flatten border))
                   *empty-grid*)))
 
+(defn grid-count [border]
+  (reduce (fn [m grid]
+            (assoc m grid (inc (m grid))))
+          {*black-piece* 0
+           *white-piece* 0
+           *empty-grid* 0}
+          (flatten border)))
+
 (defn who-win? [border]
-  (let [result-count
-        (reduce (fn [m grid]
-                  (assoc m grid (inc (m grid))))
-                {*black-piece* 0
-                 *white-piece* 0
-                 *empty-grid* 0}
-                (flatten border)
-                )]
+  (let [result-count (grid-count border)]
     (cond (> 0 (result-count *empty-grid*))
           nil
-          (> (result-count *white-piece*) (result-count *black-piece*))
+          (> (result-count *white-piece*)
+             (result-count *black-piece*))
           *white-piece*
           :else
           *black-piece*)))
