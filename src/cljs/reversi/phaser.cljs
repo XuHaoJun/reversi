@@ -7,8 +7,10 @@
 (def ^:dynamic *visible-possible-grids-pos* '())
 (def ^:dynamic *default-player-piece* rcore/*black-piece*)
 (def ^:dynamic *default-pc-piece* rcore/*white-piece*)
-(def ^:dynamic *phaser-width* 905)
-(def ^:dynamic *phaser-height* 605)
+(def ^:dynamic *phaser-width* 905)      ;; 300x605 let show piece count information
+(def ^:dynamic *phaser-height* 605)     ;; 605x605 is reversi border
+(def ^:dynamic *phaser-border-width* 605)
+(def ^:dynamic *phaser-border-height* 605)
 (def ^:dynamic *game* (js/Phaser.Game.
                        *phaser-width* *phaser-height*
                        js/Phaser.AUTO "game_div"))
@@ -202,7 +204,7 @@
     (set! (.-restartButton game) restart-button)))
 
 (def ^:dynamic *assets-table*
-   ;name    path
+  ;; name    path
   [["border"         "assets/reversi-border.png"]
    ["white-piece"    "assets/white-piece.png"]
    ["black-piece"    "assets/black-piece.png"]
@@ -225,7 +227,9 @@
 
 (defn create [game]
   (set! (.-backgroundColor (.-stage game)) "#ffffff")
-  (.tileSprite (.-add game) 0 0 605 605 "border")
+  (.tileSprite (.-add game) 0 0
+               *phaser-border-width*
+               *phaser-border-height* "border")
   (create-possible-grids "possible-grid" game)
   (create-all-pieces "white-piece" "black-piece" game)
   (create-text game)
@@ -234,11 +238,11 @@
 
 (defn ^export start [game]
   (init-phaser game)
-    (.add (.-state game) "main"
-          (clj->js {:preload preload
-                    :create create
-                    }))
-    (.start (.-state game) "main"))
+  (.add (.-state game) "main"
+        (clj->js {:preload preload
+                  :create create
+                  }))
+  (.start (.-state game) "main"))
 
 (defprotocol Functor
   (restart [this]))
