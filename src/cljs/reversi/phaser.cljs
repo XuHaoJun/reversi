@@ -2,9 +2,9 @@
   (:require [clojure.browser.repl]
             [reversi.core :as rcore]))
 
-(def *border*  rcore/*default-border*)
-(def *phaser-border* [[] [] [] [] [] [] [] []])
-(def *visible-possible-grids-pos* '())
+(def ^:dynamic *border*  rcore/*default-border*)
+(def ^:dynamic *phaser-border* [[] [] [] [] [] [] [] []])
+(def ^:dynamic *visible-possible-grids-pos* '())
 (def ^:dynamic *default-player-piece* rcore/*black-piece*)
 (def ^:dynamic *default-pc-piece* rcore/*white-piece*)
 (def *game* (js/Phaser.Game.
@@ -154,20 +154,20 @@
         (set! (.-phaserBorder game)
               (assoc-in phaser-border [y x grid-name] pgrid))))))
 
-;; (defn game-loop []
-;;   (js/alert "wiwi"))
-
 (defn init-border [game]
-  (let [phaser-border (.-phaserBorder game)]
-    (set! (.-visible ((rcore/gridth [3 3] phaser-border) "black-piece")) true)
-    (set! (.-visible ((rcore/gridth [4 4] phaser-border) "black-piece")) true)
-    (set! (.-visible ((rcore/gridth [4 3] phaser-border) "white-piece")) true)
-    (set! (.-visible ((rcore/gridth [3 4] phaser-border) "white-piece")) true)
-    (set! (.-visible ((rcore/gridth [3 4] phaser-border) "white-piece")) true)
-    (set! (.-visible ((rcore/gridth [4 2] phaser-border) "possible-grid")) true)
-    (set! (.-visible ((rcore/gridth [3 5] phaser-border) "possible-grid")) true)
-    (set! (.-visible ((rcore/gridth [5 3] phaser-border) "possible-grid")) true)
-    (set! (.-visible ((rcore/gridth [2 4] phaser-border) "possible-grid")) true)
+  (let [phaser-border (.-phaserBorder game)
+        view-table [[[3 3] "black-piece"]
+                    [[4 4] "black-piece"]
+                    [[4 3] "white-piece"]
+                    [[3 4] "white-piece"]
+                    [[4 2] "possible-grid"]
+                    [[3 5] "possible-grid"]
+                    [[5 3] "possible-grid"]
+                    [[2 4] "possible-grid"]]]
+    (doseq [view-pair view-table]
+      (let [pos (first view-pair)
+            name (second view-pair)]
+        (set! (.-visible ((rcore/gridth pos phaser-border) name)) true)))
     (doseq [pos [ [4 2] [3 5] [5 3] [2 4] ]]
       (let [visible-possible-grids-pos (.-visiblePossibleGridsPos game)]
         (set! (.-visiblePossibleGridsPos game)
@@ -194,7 +194,7 @@
     (set! (.-restartButton game) restart-button)))
 
 (def ^:dynamic *assets-table*
-                                        ;name    path
+   ;name    path
   [["border"         "assets/reversi-border.png"]
    ["white-piece"    "assets/white-piece.png"]
    ["black-piece"    "assets/black-piece.png"]
@@ -213,12 +213,12 @@
 
 ;; (defn render [game])
 
-(defn init-reversi []
-  (set! (.-border *game*) *border*)
-  (set! (.-phaserBorder *game*) *phaser-border*)
-  (set! (.-visiblePossibleGridsPos *game*) *visible-possible-grids-pos*)
-  (set! (.-defaultPlayerPiece *game*) *default-player-piece*)
-  (set! (.-defaultPcPiece *game*) *default-pc-piece*))
+(defn init-phaser [game]
+  (set! (.-border game) *border*)
+  (set! (.-phaserBorder game) *phaser-border*)
+  (set! (.-visiblePossibleGridsPos game) *visible-possible-grids-pos*)
+  (set! (.-defaultPlayerPiece game) *default-player-piece*)
+  (set! (.-defaultPcPiece game) *default-pc-piece*))
 
 (defn create [game]
   (set! (.-backgroundColor (.-stage game)) "#ffffff")
@@ -230,7 +230,7 @@
   (init-border game))
 
 (defn ^export start [game]
-  (init-reversi)
+  (init-phaser game)
     (.add (.-state game) "main"
           (clj->js {:preload preload
                     :create create
