@@ -5,6 +5,7 @@
 (def *border* (atom rcore/*default-border*))
 (def *phaser-border* (atom [[] [] [] [] [] [] [] []]))
 (def *visible-possible-grids-pos* (atom '()))
+(def ^:dynamic *game* (js/Phaser.Game. 905 605 js/Phaser.AUTO "game_div"))
 (def ^:dynamic *default-player-use-piece* rcore/*black-piece*)
 (def ^:dynamic *default-pc-use-piece* rcore/*white-piece*)
 
@@ -84,21 +85,17 @@
              @*phaser-border*)
   (pc-ai-put-piece @*border* @*phaser-border*)
   (let [no-put-piece-ai-and-player?
-        (show-possible-grid-on-pborder @*border* @*phaser-border*)]
-    (when (or (rcore/end-game? @*border*) (nil? no-put-piece-ai-and-player?))
+        (nil? (show-possible-grid-on-pborder @*border* @*phaser-border*))]
+    (when (or (rcore/end-game? @*border*) no-put-piece-ai-and-player?)
       (let [winner (rcore/who-win? @*border*)]
         (if (= winner *default-player-use-piece*)
           (js/alert "you are winner!")
           (js/alert "you are loser!")))))
-
   (let [result-count (rcore/grid-count @*border*)]
-    (set! (.-text (.-pieceCountText game))
+    (set! (.-text (.-pieceCountText *game*))
           (str "black-piece: " (result-count rcore/*black-piece*)
                "\nwhite-piece: " (result-count rcore/*white-piece*)
-               )
-          )
-    )
-  )
+               ))))
 
 (defn create-pieces [piece-name game]
   (let [piece-color (grid-name->rcore-grid piece-name)]
@@ -150,13 +147,19 @@
         style (clj->js { :font "35px Arial" :fill "#000000" :align "left" })]
     (set! (.-pieceCountText game) (.text (.-add game) 615 20 text style))))
 
+(defn ^export restart [game]
+  (reset! *border* rcore/*default-border*)
+  (reset! *phaser-border* [[] [] [] [] [] [] [] []])
+  (reset! *visible-possible-grids-pos* '())
+  (.start (.-state game) "main"))
+
 (defn create-buttons [game]
   (let [restart-button
         (.sprite (.-add game) 675 515 "restart-button")]
     (set! (.-inputEnabled restart-button) true)
     (set! (.-useHandCursor (.-input restart-button)) true)
     (.add (.-onInputDown (.-events restart-button))
-          (fn [b] (restart)) game)))
+          (fn [b] (restart game)) game)))
 
 (defn create [game]
   (set! (.-backgroundColor (.-stage game)) "#ffffff")
@@ -175,14 +178,10 @@
     (.image loader "possible-grid" "assets/gray-grid.png")
     (.image loader "restart-button" "assets/restart-button.png")))
 
-
 ;; (defn update [game]
 ;;   )
 
-
-(def ^export game (js/Phaser.Game. 905 605 js/Phaser.AUTO "game_div"))
-
-(defn ^export start []
+(defn ^export start [game]
   (.add (.-state game) "main"
         (clj->js {:preload preload
                   :create create
@@ -190,10 +189,4 @@
                   }))
   (.start (.-state game) "main"))
 
-(defn ^export restart []
-  (reset! *border* rcore/*default-border*)
-  (reset! *phaser-border* [[] [] [] [] [] [] [] []])
-  (reset! *visible-possible-grids-pos* '())
-  (start))
-
-(start)
+(start *game*)
