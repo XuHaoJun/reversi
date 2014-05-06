@@ -150,6 +150,13 @@
         style (clj->js { :font "35px Arial" :fill "#000000" :align "left" })]
     (set! (.-pieceCountText game) (.text (.-add game) 615 20 text style))))
 
+(defn create-buttons [game]
+  (let [restart-button
+        (.sprite (.-add game) 675 515 "restart-button")]
+    (set! (.-inputEnabled restart-button) true)
+    (set! (.-useHandCursor (.-input restart-button)) true)
+    (.add (.-onInputDown (.-events restart-button))
+          (fn [b] (restart)) game)))
 
 (defn create [game]
   (set! (.-backgroundColor (.-stage game)) "#ffffff")
@@ -157,6 +164,7 @@
   (create-possible-grids "possible-grid" game)
   (create-all-pieces "white-piece" "black-piece" game)
   (create-text game)
+  (create-buttons game)
   (init-border))
 
 (defn preload [game]
@@ -164,7 +172,8 @@
     (.image loader "border" "assets/reversi-border.png")
     (.image loader "white-piece" "assets/white-piece.png")
     (.image loader "black-piece" "assets/black-piece.png")
-    (.image loader "possible-grid" "assets/gray-grid.png")))
+    (.image loader "possible-grid" "assets/gray-grid.png")
+    (.image loader "restart-button" "assets/restart-button.png")))
 
 
 ;; (defn update [game]
@@ -180,5 +189,11 @@
                   ;; :update update
                   }))
   (.start (.-state game) "main"))
+
+(defn ^export restart []
+  (reset! *border* rcore/*default-border*)
+  (reset! *phaser-border* [[] [] [] [] [] [] [] []])
+  (reset! *visible-possible-grids-pos* '())
+  (start))
 
 (start)
