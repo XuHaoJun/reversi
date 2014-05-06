@@ -7,8 +7,10 @@
 (def ^:dynamic *visible-possible-grids-pos* '())
 (def ^:dynamic *default-player-piece* rcore/*black-piece*)
 (def ^:dynamic *default-pc-piece* rcore/*white-piece*)
+(def ^:dynamic *phaser-width* 905)
+(def ^:dynamic *phaser-height* 605)
 (def ^:dynamic *game* (js/Phaser.Game.
-                       905 605
+                       *phaser-width* *phaser-height*
                        js/Phaser.AUTO "game_div"))
 
 (defn grid-name->rcore-grid [grid-name]
@@ -125,9 +127,12 @@
                  "\nwhite-piece: " (result-count rcore/*white-piece*))))))
 
 (defn create-pieces [piece-name game]
-  (let [piece-color (grid-name->rcore-grid piece-name)]
-    (dotimes [y 8]
-      (dotimes [x 8]
+  (let [border (.-border game)
+        height(rcore/border-height border)
+        width (rcore/border-width border)
+        piece-color (grid-name->rcore-grid piece-name)]
+    (dotimes [y height]
+      (dotimes [x width]
         (let [phaser-border (.-phaserBorder game)
               phaser-pos
               (grid-pos->phaser-pos [x y])
@@ -140,19 +145,22 @@
                 (assoc-in phaser-border [y x piece-name] piece)))))))
 
 (defn create-possible-grids [grid-name game]
-  (dotimes [y 8]
-    (dotimes [x 8]
-      (let [phaser-border (.-phaserBorder game)
-            pgrid
-            (.sprite (.-add game) (+ 5 (* x 75)) (+ 5 (* y 75)) grid-name)]
-        (set! (.-inputEnabled pgrid) true)
-        (.add (.-onInputDown (.-events pgrid)) on-click-possible-grid game)
-        (set! (.-visible pgrid) false)
-        (set! (.-gridPosition pgrid) [x y])
-        (set! (.-gridColor pgrid) rcore/*possible-grid*)
-        (set! (.-useHandCursor (.-input pgrid)) true)
-        (set! (.-phaserBorder game)
-              (assoc-in phaser-border [y x grid-name] pgrid))))))
+  (let [border (.-border game)
+        height(rcore/border-height border)
+        width (rcore/border-width border)]
+    (dotimes [y height]
+      (dotimes [x width]
+        (let [phaser-border (.-phaserBorder game)
+              pgrid
+              (.sprite (.-add game) (+ 5 (* x 75)) (+ 5 (* y 75)) grid-name)]
+          (set! (.-inputEnabled pgrid) true)
+          (.add (.-onInputDown (.-events pgrid)) on-click-possible-grid game)
+          (set! (.-visible pgrid) false)
+          (set! (.-gridPosition pgrid) [x y])
+          (set! (.-gridColor pgrid) rcore/*possible-grid*)
+          (set! (.-useHandCursor (.-input pgrid)) true)
+          (set! (.-phaserBorder game)
+                (assoc-in phaser-border [y x grid-name] pgrid)))))))
 
 (defn init-border [game]
   (let [phaser-border (.-phaserBorder game)
@@ -231,7 +239,6 @@
                     :create create
                     }))
     (.start (.-state game) "main"))
-(set! (.-restartGame *game*) start)
 
 (defprotocol Functor
   (restart [this]))
