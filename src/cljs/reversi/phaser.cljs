@@ -7,9 +7,9 @@
 (def ^:dynamic *visible-possible-grids-pos* '())
 (def ^:dynamic *default-player-piece* rcore/*black-piece*)
 (def ^:dynamic *default-pc-piece* rcore/*white-piece*)
-(def *game* (js/Phaser.Game.
-             905 605
-             js/Phaser.AUTO "game_div"))
+(def ^:dynamic *game* (js/Phaser.Game.
+                       905 605
+                       js/Phaser.AUTO "game_div"))
 
 (defn grid-name->rcore-grid [grid-name]
   (let [gn-rp-table
@@ -208,11 +208,6 @@
             path (second pair)]
         (.image loader name path)))))
 
-;; (defn update [game]
-;;   )
-
-;; (defn render [game])
-
 (defn init-phaser [game]
   (set! (.-border game) *border*)
   (set! (.-phaserBorder game) *phaser-border*)
@@ -234,7 +229,6 @@
     (.add (.-state game) "main"
           (clj->js {:preload preload
                     :create create
-                    ;; :update update
                     }))
     (.start (.-state game) "main"))
 (set! (.-restartGame *game*) start)

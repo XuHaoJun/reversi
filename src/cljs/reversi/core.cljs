@@ -92,8 +92,8 @@
 (defn empty-grid? [grid]
   (not (piece? grid)))
 
-(defn gridth [[x y] border]
-  (get-in border [y x]))
+(defn gridth [[x y & ks] border]
+  (get-in border (concat [y x] ks)))
 
 (defn in-empty-grid? [[x y] border]
   (empty-grid? (gridth [x y] border)))
