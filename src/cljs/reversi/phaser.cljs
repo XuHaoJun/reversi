@@ -190,7 +190,7 @@
     (set! (.-inputEnabled restart-button) true)
     (set! (.-useHandCursor (.-input restart-button)) true)
     (.add (.-onInputDown (.-events restart-button))
-          (fn [b] (.restartGame game game)) game)
+          (fn [b] (restart (.-game b))) game)
     (set! (.-restartButton game) restart-button)))
 
 (def ^:dynamic *assets-table*
@@ -232,5 +232,13 @@
                     }))
     (.start (.-state game) "main"))
 (set! (.-restartGame *game*) start)
+
+(defprotocol Functor
+  (restart [this]))
+
+(extend-type js/Phaser.Game
+  Functor
+  (restart
+    ([this] (start this))))
 
 (start *game*)
