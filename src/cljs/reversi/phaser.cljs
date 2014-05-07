@@ -229,10 +229,10 @@
     (doseq [pair *assets-table*]
       (let [name (first pair)
             path (second pair)]
-        (.image loader name path)))))
+        (.image loader name path)))
+    (set! (.-backgroundColor (.-stage game)) "#ffffff")))
 
 (defn create [game]
-  (set! (.-backgroundColor (.-stage game)) "#ffffff")
   (.tileSprite (.-add game) 0 0
                *phaser-border-width*
                *phaser-border-height* "border")
