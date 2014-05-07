@@ -22,6 +22,13 @@
    ["possible-grid"  "assets/gray-grid.png"]
    ["restart-button" "assets/restart-button.png"]])
 
+(defn init-phaser [game]
+  (set! (.-border game) *border*)
+  (set! (.-phaserBorder game) *phaser-border*)
+  (set! (.-visiblePossibleGridsPos game) *visible-possible-grids-pos*)
+  (set! (.-defaultPlayerPiece game) *default-player-piece*)
+  (set! (.-defaultPcPiece game) *default-pc-piece*))
+
 (defn grid-name->rcore-grid [grid-name]
   (let [gn-rp-table
         {"empty-grid" rcore/*empty-gird*
@@ -212,7 +219,7 @@
     (set! (.-inputEnabled restart-button) true)
     (set! (.-useHandCursor (.-input restart-button)) true)
     (.add (.-onInputDown (.-events restart-button))
-          (fn [b] (restart (.-game b))) game)
+          (fn [b] (.restartGame game)) game)
     (set! (.-restartButton game) restart-button)))
 
 (defn preload [game]
@@ -221,13 +228,6 @@
       (let [name (first pair)
             path (second pair)]
         (.image loader name path)))))
-
-(defn init-phaser [game]
-  (set! (.-border game) *border*)
-  (set! (.-phaserBorder game) *phaser-border*)
-  (set! (.-visiblePossibleGridsPos game) *visible-possible-grids-pos*)
-  (set! (.-defaultPlayerPiece game) *default-player-piece*)
-  (set! (.-defaultPcPiece game) *default-pc-piece*))
 
 (defn create [game]
   (set! (.-backgroundColor (.-stage game)) "#ffffff")
@@ -241,19 +241,14 @@
   (init-border game))
 
 (defn ^export start [game]
-  (init-phaser game)
-  (.add (.-state game) "main"
-        (clj->js {:preload preload
-                  :create create
-                  }))
-  (.start (.-state game) "main"))
-
-(defprotocol Functor
-  (restart [this]))
-
-(extend-type js/Phaser.Game
-  Functor
-  (restart
-    ([this] (start this))))
+  (let [start-fn (fn []
+                   (init-phaser game)
+                   (.add (.-state game) "main"
+                         (clj->js {:preload preload
+                                   :create create
+                                   }))
+                   (.start (.-state game) "main"))]
+    (set! (.-restartGame game) start-fn)
+    (start-fn)))
 
 (start *game*)

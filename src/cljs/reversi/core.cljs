@@ -47,6 +47,9 @@
 (defn border-width [border]
   (count (nth border 0 [])))
 
+(defn all-pieces-puted? [border]
+  (not (contains? (set (flatten border))
+                  *empty-grid*)))
 (defn end-game?
   [border
    & {:keys [strict] :or {strict false}}]
@@ -56,10 +59,6 @@
   ;; (if strict
   ;;   )
   (all-pieces-puted? border))
-
-(defn all-pieces-puted? [border]
-  (not (contains? (set (flatten border))
-                  *empty-grid*)))
 
 (defn grid-count [border]
   (reduce (fn [m grid]
