@@ -7,27 +7,15 @@
 
         <style>
             #game_div {
-                position: absolute;
-                margin-left: auto;
-                margin-right: auto;
-                left: 0;
-                right: 0;
+                float:left
             }
         </style>
-
-
-        <script type="text/javascript" src="/phaser.min.js"></script>
-        <script type="text/javascript" src="/reversi-phaser.js"></script>
+        <script type="text/javascript" src="phaser.min.js"></script>
+        <script type="text/javascript" src="reversi-phaser.js"></script>
         <script type="text/javascript">goog.require("reversi.phaser");</script>
-        <script>
-            reversi.phaser.run();
-        </script>
     </head>
-
     <body>
-
-        <div id="game_div"> </div>
-
+        <div id="game_div" oncontextmenu="return false;"></div>
+        <h1><a href="https://github.com/XuHaoJun/reversi" target="_blank">Source code</a>
     </body>
-
 </html>
