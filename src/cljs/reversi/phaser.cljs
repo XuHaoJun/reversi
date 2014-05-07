@@ -2,6 +2,8 @@
   (:require [clojure.browser.repl]
             [reversi.core :as rcore]))
 
+;; thie file use too more side effect fn so may be rewirte new version
+
 (def ^:dynamic *border*  rcore/*default-border*)
 (def ^:dynamic *phaser-border* [[] [] [] [] [] [] [] []])
 (def ^:dynamic *visible-possible-grids-pos* '())
@@ -130,7 +132,7 @@
                (.-gridPosition pgrid)
                game)
     (pc-ai-put-piece game)
-    (let [result-count (rcore/grid-count border)]
+    (let [result-count (rcore/grid-count (.-border game))]
       (set! (.-text (.-pieceCountText game))
             (str "black-piece: " (result-count rcore/*black-piece*)
                  "\nwhite-piece: " (result-count rcore/*white-piece*))))
