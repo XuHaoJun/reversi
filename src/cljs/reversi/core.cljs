@@ -5,6 +5,7 @@
 (def ^:dynamic *black-piece* 1)
 (def ^:dynamic *white-piece* 2)
 (def ^:dynamic *possible-grid* 3)
+(def ^:dynamic *deuce-end* 4)
 
 (def ^:dynamic *default-border*
   ;  0 1 2 3 4 5 6 7
@@ -46,7 +47,17 @@
 (defn border-width [border]
   (count (nth border 0 [])))
 
-(defn end-game? [border]
+(defn end-game?
+  [border
+   & {:keys [strict] :or {strict false}}]
+  ;; TODO
+  ;; ask border can put piece?
+  ;; not only check has 64 pieces in border
+  ;; (if strict
+  ;;   )
+  (all-pieces-puted? border))
+
+(defn all-pieces-puted? [border]
   (not (contains? (set (flatten border))
                   *empty-grid*)))
 
@@ -58,12 +69,19 @@
            *empty-grid* 0}
           (flatten border)))
 
-(defn who-win? [border]
-  (let [result-count (grid-count border)]
+(defn who-win?
+  [border
+   & {:keys [strict] :or {strict false}}]
+  (let [result-count (grid-count border)
+        white-piece-count (result-count *white-piece*)
+        black-piece-count (result-count *black-piece*)]
     (cond (> 0 (result-count *empty-grid*))
+          ;; (if strict
+          ;; ask white/black can put piece?
           nil
-          (> (result-count *white-piece*)
-             (result-count *black-piece*))
+          (= white-piece-count black-piece-count)
+          *deuce-end*
+          (> white-piece-count black-piece-count)
           *white-piece*
           :else
           *black-piece*)))

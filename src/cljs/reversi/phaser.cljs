@@ -14,6 +14,13 @@
 (def ^:dynamic *game* (js/Phaser.Game.
                        *phaser-width* *phaser-height*
                        js/Phaser.AUTO "game_div"))
+(def ^:dynamic *assets-table*
+  ;; name    path
+  [["border"         "assets/reversi-border.png"]
+   ["white-piece"    "assets/white-piece.png"]
+   ["black-piece"    "assets/black-piece.png"]
+   ["possible-grid"  "assets/gray-grid.png"]
+   ["restart-button" "assets/restart-button.png"]])
 
 (defn grid-name->rcore-grid [grid-name]
   (let [gn-rp-table
@@ -116,17 +123,22 @@
                (.-gridPosition pgrid)
                game)
     (pc-ai-put-piece game)
-    (let [no-put-piece-ai-and-player?
-          (nil? (show-possible-grid-on-pborder game))]
-      (when (or (rcore/end-game? border) no-put-piece-ai-and-player?)
-        (let [winner (rcore/who-win? border)]
-          (if (= winner default-player-piece)
-            (js/alert "you are winner!")
-            (js/alert "you are loser!")))))
     (let [result-count (rcore/grid-count border)]
       (set! (.-text (.-pieceCountText game))
             (str "black-piece: " (result-count rcore/*black-piece*)
-                 "\nwhite-piece: " (result-count rcore/*white-piece*))))))
+                 "\nwhite-piece: " (result-count rcore/*white-piece*))))
+    (let [no-put-piece-ai-and-player?
+          (nil? (show-possible-grid-on-pborder game))]
+      (when (or (rcore/all-pieces-puted? border)
+                no-put-piece-ai-and-player?)
+        (let [winner (rcore/who-win? border)]
+          (cond
+           (= winner rcore/*deuce-end*)
+           (js/alert "deuce end!")
+           (= winner default-player-piece)
+           (js/alert "you are winner!")
+           :else
+           (js/alert "you are loser!")))))))
 
 (defn create-pieces [piece-name game]
   (let [border (.-border game)
@@ -202,14 +214,6 @@
     (.add (.-onInputDown (.-events restart-button))
           (fn [b] (restart (.-game b))) game)
     (set! (.-restartButton game) restart-button)))
-
-(def ^:dynamic *assets-table*
-  ;; name    path
-  [["border"         "assets/reversi-border.png"]
-   ["white-piece"    "assets/white-piece.png"]
-   ["black-piece"    "assets/black-piece.png"]
-   ["possible-grid"  "assets/gray-grid.png"]
-   ["restart-button" "assets/restart-button.png"]])
 
 (defn preload [game]
   (let [loader (.-load game)]
