@@ -133,22 +133,23 @@
                (.-gridPosition pgrid)
                game)
     (pc-ai-put-piece game)
-    (let [result-count (rcore/grid-count (.-border game))]
-      (set! (.-text (.-pieceCountText game))
-            (str "black-piece: " (result-count rcore/*black-piece*)
-                 "\nwhite-piece: " (result-count rcore/*white-piece*))))
-    (let [no-put-piece-ai-and-player?
-          (nil? (show-possible-grid-on-pborder game))]
-      (when (or (rcore/all-pieces-puted? border)
-                no-put-piece-ai-and-player?)
-        (let [winner (rcore/who-win? border)]
-          (cond
-           (= winner rcore/*deuce-end*)
-           (js/alert "deuce end!")
-           (= winner default-player-piece)
-           (js/alert "you are winner!")
-           :else
-           (js/alert "you are loser!")))))))
+    (let [puted-border (.-border game)]
+      (let [result-count (rcore/grid-count puted-border)]
+        (set! (.-text (.-pieceCountText game))
+              (str "black-piece: " (result-count rcore/*black-piece*)
+                   "\nwhite-piece: " (result-count rcore/*white-piece*))))
+      (let [no-put-piece-ai-and-player?
+            (nil? (show-possible-grid-on-pborder game))]
+        (when (or (rcore/all-pieces-puted? puted-border)
+                  no-put-piece-ai-and-player?)
+          (let [winner (rcore/who-win? puted-border)]
+            (cond
+             (= winner rcore/*deuce-end*)
+             (js/alert "deuce end!")
+             (= winner default-player-piece)
+             (js/alert "you are winner!")
+             :else
+             (js/alert "you are loser!"))))))))
 
 (defn create-pieces [piece-name game]
   (let [border (.-border game)
