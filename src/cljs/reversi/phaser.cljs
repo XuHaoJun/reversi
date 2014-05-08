@@ -22,7 +22,8 @@
    ["white-piece"    "assets/white-piece.png"]
    ["black-piece"    "assets/black-piece.png"]
    ["possible-grid"  "assets/gray-grid.png"]
-   ["restart-button" "assets/restart-button.png"]])
+   ["restart-button" "assets/restart-button.png"]
+   ["fullscreen-button" "assets/fullscreen-button.png"]])
 
 (defn init-phaser [game]
   (set! (.-border game) *border*)
@@ -167,7 +168,7 @@
           (set! (.-phaserBorder game)
                 (assoc-in phaser-border [y x piece-name] piece)))))))
 
-(defn create-possible-grids [grid-name game]
+(defn create-possible-grids [pgrid-name game]
   (let [border (.-border game)
         height(rcore/border-height border)
         width (rcore/border-width border)]
@@ -175,7 +176,7 @@
       (dotimes [x width]
         (let [phaser-border (.-phaserBorder game)
               pgrid
-              (.sprite (.-add game) (+ 5 (* x 75)) (+ 5 (* y 75)) grid-name)]
+              (.sprite (.-add game) (+ 5 (* x 75)) (+ 5 (* y 75)) pgrid-name)]
           (set! (.-inputEnabled pgrid) true)
           (.add (.-onInputDown (.-events pgrid)) on-click-possible-grid game)
           (set! (.-visible pgrid) false)
@@ -183,7 +184,7 @@
           (set! (.-gridColor pgrid) rcore/*possible-grid*)
           (set! (.-useHandCursor (.-input pgrid)) true)
           (set! (.-phaserBorder game)
-                (assoc-in phaser-border [y x grid-name] pgrid)))))))
+                (assoc-in phaser-border [y x pgrid-name] pgrid)))))))
 
 (defn init-border [game]
   (let [phaser-border (.-phaserBorder game)
@@ -217,12 +218,18 @@
 
 (defn create-buttons [game]
   (let [restart-button
-        (.sprite (.-add game) 675 515 "restart-button")]
+        (.sprite (.-add game) 675 415 "restart-button")]
     (set! (.-inputEnabled restart-button) true)
     (set! (.-useHandCursor (.-input restart-button)) true)
     (.add (.-onInputDown (.-events restart-button))
           (fn [b] (.restartGame game)) game)
-    (set! (.-restartButton game) restart-button)))
+    (set! (.-restartButton game) restart-button))
+  (let [fullscreen-button
+        (.sprite (.-add game) 675 465 "fullscreen-button")]
+    (set! (.-inputEnabled fullscreen-button) true)
+    (set! (.-useHandCursor (.-input fullscreen-button)) true)
+    (.add (.-onInputDown (.-events fullscreen-button))
+          (fn [fbtn] (.startFullScreen (.-scale game))) game)))
 
 (defn preload [game]
   (let [loader (.-load game)]
@@ -233,6 +240,8 @@
     (set! (.-backgroundColor (.-stage game)) "#ffffff")))
 
 (defn create [game]
+  (set! (.-fullScreenScaleMode (.-scale game))
+        (.-EXACT_FIT (.-ScaleManager js/Phaser)))
   (.tileSprite (.-add game) 0 0
                *phaser-border-width*
                *phaser-border-height* "border")
