@@ -1,10 +1,14 @@
 # reversi
 
-A Clojure library designed to ... well, that part is up to you.
+A simple reversi game written by clojurescript.
+
+[Try it Online](https://xuhaojun.github.io/reversi/)
 
 ## Usage
 
-FIXME
+lein deps
+lein cljsbuild once
+cd resources/public
 
 ## License
 
