@@ -2,13 +2,19 @@
 
 A simple reversi game written by clojurescript.
 
-[Try it Online](https://xuhaojun.github.io/reversi/)
+[Try it online](https://xuhaojun.github.io/reversi/)
 
 ## Usage
-
+```sh
 lein deps
 lein cljsbuild once
 cd resources/public
+#use your browser open index.html
+```
+server:
+``` sh
+lein run
+```
 
 ## License
 
